@@ -5,6 +5,7 @@
 #ifndef _PKVM_H_
 #define _PKVM_H_
 
+#include <asm/pkvm_image.h>
 #include <vmx/vmx.h>
 
 #define STACK_SIZE SZ_16K
@@ -46,7 +47,7 @@ struct pkvm_hyp {
 #define PKVM_PCPU_PAGES (ALIGN(sizeof(struct pkvm_pcpu), PAGE_SIZE) >> PAGE_SHIFT)
 #define PKVM_HOST_VCPU_PAGES (ALIGN(sizeof(struct pkvm_host_vcpu), PAGE_SIZE) >> PAGE_SHIFT)
 
-void __pkvm_vmx_vmexit(void);
-int pkvm_main(struct kvm_vcpu *vcpu);
+PKVM_DECLARE(void, __pkvm_vmx_vmexit(void));
+PKVM_DECLARE(int, pkvm_main(struct kvm_vcpu *vcpu));
 
 #endif
