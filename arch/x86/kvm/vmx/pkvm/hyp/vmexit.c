@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: GPL-2.0
  */
 
+#include <linux/memblock.h>
+#include <asm/kvm_pkvm.h>
 #include <pkvm.h>
 #include "vmexit.h"
 
@@ -12,6 +14,9 @@
 #define CR4	4
 
 #define MOV_TO_CR		0
+
+extern int __pkvm_init_finalise(struct kvm_vcpu *vcpu,
+		phys_addr_t phys, unsigned long size);
 
 static void skip_emulated_instruction(void)
 {
@@ -72,6 +77,28 @@ static void handle_cr(struct kvm_vcpu *vcpu)
 	default:
 		break;
 	}
+}
+
+static unsigned long handle_vmcall(struct kvm_vcpu *vcpu)
+{
+	u64 nr, a0, a1, a2, a3;
+	unsigned long ret = 0;
+
+	nr = vcpu->arch.regs[VCPU_REGS_RAX];
+	a0 = vcpu->arch.regs[VCPU_REGS_RBX];
+	a1 = vcpu->arch.regs[VCPU_REGS_RCX];
+	a2 = vcpu->arch.regs[VCPU_REGS_RDX];
+	a3 = vcpu->arch.regs[VCPU_REGS_RSI];
+
+	switch (nr) {
+	case PKVM_HC_INIT_FINALISE:
+		__pkvm_init_finalise(vcpu, a0, a1);
+		break;
+	default:
+		ret = -EINVAL;
+	}
+
+	return ret;
 }
 
 static void handle_read_msr(struct kvm_vcpu *vcpu)
@@ -140,6 +167,10 @@ int pkvm_main(struct kvm_vcpu *vcpu)
 			break;
 		case EXIT_REASON_XSETBV:
 			handle_xsetbv(vcpu);
+			skip_instruction = true;
+			break;
+		case EXIT_REASON_VMCALL:
+			vcpu->arch.regs[VCPU_REGS_RAX] = handle_vmcall(vcpu);
 			skip_instruction = true;
 			break;
 		default:
