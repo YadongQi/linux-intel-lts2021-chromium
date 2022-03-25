@@ -3,7 +3,7 @@
 #ifndef __X86_INTEL_PKVM_IMAGE_H
 #define __X86_INTEL_PKVM_IMAGE_H
 
-#ifdef __PKVM_HYP__
+#if defined(CONFIG_PKVM_INTEL_DEBUG) || defined(__PKVM_HYP__)
 /* No prefix will be added */
 #define PKVM_DECLARE(type, f)	type f
 #define pkvm_sym(sym)		sym
