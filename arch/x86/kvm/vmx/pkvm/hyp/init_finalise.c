@@ -16,6 +16,7 @@
 #include "mmu.h"
 #include "ept.h"
 #include "vmx.h"
+#include "nested.h"
 #include "debug.h"
 
 void *pkvm_vmemmap_base;
@@ -284,6 +285,8 @@ int __pkvm_init_finalise(struct kvm_vcpu *vcpu, struct pkvm_section sections[],
 			pkvm_mem_base, pkvm_mem_size);
 	if (ret)
 		goto out;
+
+	pkvm_init_nest();
 
 	pkvm_init = true;
 
