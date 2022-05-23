@@ -20,6 +20,7 @@
 #include "debug.h"
 #include "iommu.h"
 #include "iommu_internal.h"
+#include "mem_protect.h"
 
 void *pkvm_vmemmap_base;
 void *pkvm_mmu_pgt_base;
@@ -194,7 +195,7 @@ static int create_host_ept_mapping(void)
 	/*
 	 * Create EPT mapping for memory with WB + RWX property
 	 */
-	entry_prot = HOST_EPT_DEF_MEM_PROT;
+	entry_prot = pkvm_mkstate(HOST_EPT_DEF_MEM_PROT, PKVM_PAGE_OWNED);
 
 	for (i = 0; i < pkvm_memblock_nr; i++) {
 		reg = &pkvm_memory[i];
