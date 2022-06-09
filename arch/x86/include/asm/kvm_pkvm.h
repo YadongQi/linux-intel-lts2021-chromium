@@ -121,7 +121,7 @@ static inline int pkvm_pre_reserve_check(void)
 
 /* Calculate the total pages for Scalable IOMMU */
 static inline unsigned long pkvm_iommu_pages(int max_pasid, int nr_pasid_pdev,
-					     int nr_pdev, int nr_iommu)
+					     int nr_pdev, int nr_iommu, int qidesc_sz)
 {
 	unsigned long res = 0;
 
@@ -138,6 +138,8 @@ static inline unsigned long pkvm_iommu_pages(int max_pasid, int nr_pasid_pdev,
 	res += min(256 * 2, nr_pasid_pdev + nr_pdev);
 	/* Root pages for each IOMMU */
 	res += nr_iommu;
+	/* Desc and desc_status pages for each IOMMU */
+	res += nr_iommu * (ALIGN(qidesc_sz, PAGE_SIZE) >> PAGE_SHIFT);
 
 	return res;
 }
