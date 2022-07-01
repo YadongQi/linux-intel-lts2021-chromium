@@ -1,0 +1,10 @@
+/*
+ * SPDX-License-Identifier: GPL-2.0
+ */
+#ifndef __PKVM_NESTED_H
+#define __PKVM_NESTED_H
+
+int handle_vmxon(struct kvm_vcpu *vcpu);
+int handle_vmxoff(struct kvm_vcpu *vcpu);
+
+#endif
