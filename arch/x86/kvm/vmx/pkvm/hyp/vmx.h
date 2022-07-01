@@ -23,4 +23,5 @@ static inline u64 pkvm_construct_eptp(unsigned long root_hpa,
 	return eptp;
 }
 
+void init_contant_host_state_area(struct pkvm_pcpu *pcpu, int cpu);
 #endif
