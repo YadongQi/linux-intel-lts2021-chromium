@@ -3,6 +3,7 @@
 #include "pkvm_hyp.h"
 #include "mem_protect.h"
 #include "pgtable.h"
+#include "ept.h"
 
 static u64 pkvm_init_invalid_leaf_owner(pkvm_id owner_id)
 {
@@ -11,7 +12,7 @@ static u64 pkvm_init_invalid_leaf_owner(pkvm_id owner_id)
 		FIELD_PREP(PKVM_PAGE_STATE_PROT_MASK, PKVM_NOPAGE);
 }
 
-int host_ept_set_owner(phys_addr_t addr, u64 size, pkvm_id owner_id)
+int host_ept_set_owner_locked(phys_addr_t addr, u64 size, pkvm_id owner_id)
 {
 	u64 annotation = pkvm_init_invalid_leaf_owner(owner_id);
 	int ret;
@@ -26,6 +27,17 @@ int host_ept_set_owner(phys_addr_t addr, u64 size, pkvm_id owner_id)
 	 * will help to check the right page transition.
 	 */
 	ret = pkvm_pgtable_annotate(pkvm_hyp->host_vm.ept, addr, size, annotation);
+
+	return ret;
+}
+
+int host_ept_set_owner(phys_addr_t addr, u64 size, pkvm_id owner_id)
+{
+	int ret;
+
+	host_ept_lock();
+	ret = host_ept_set_owner_locked(addr, size, owner_id);
+	host_ept_unlock();
 
 	return ret;
 }
