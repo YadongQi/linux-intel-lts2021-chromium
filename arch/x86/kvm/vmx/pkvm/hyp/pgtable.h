@@ -15,6 +15,32 @@ struct pkvm_mm_ops {
 	void (*flush_cache)(void *vaddr, unsigned int size);
 };
 
+typedef int (*pgtable_leaf_ov_fn_t)(struct pkvm_pgtable *pgt, unsigned long vaddr,
+					int level, void *ptep, void *data);
+
+struct pkvm_pgtable_map_data {
+	unsigned long phys;
+	u64 annotation;
+	u64 prot;
+	int pgsz_mask;
+
+	/*
+	 * extra override helper ops:
+	 * - map_leaf_override():  override the final page entry map function
+	 *   		  	   for pkvm_pgtable_map()
+	 */
+	pgtable_leaf_ov_fn_t map_leaf_override;
+};
+
+struct pkvm_pgtable_free_data {
+	/*
+	 * extra override helper ops:
+	 * - free_leaf_override(): override the final page entry free function
+	 *   		  	   for pkvm_pgtable_destroy()
+	 */
+	pgtable_leaf_ov_fn_t free_leaf_override;
+};
+
 struct pkvm_pgtable_ops {
 	bool (*pgt_entry_present)(void *pte);
 	bool (*pgt_entry_huge)(void *pte);
@@ -64,12 +90,12 @@ int pkvm_pgtable_init(struct pkvm_pgtable *pgt,
 		bool alloc_root);
 int pkvm_pgtable_map(struct pkvm_pgtable *pgt, unsigned long vaddr_start,
 		unsigned long phys_start, unsigned long size,
-		int pgsz_mask, u64 entry_prot);
+		int pgsz_mask, u64 entry_prot, pgtable_leaf_ov_fn_t map_leaf);
 int pkvm_pgtable_unmap(struct pkvm_pgtable *pgt, unsigned long vaddr_start,
 		unsigned long phys_start, unsigned long size);
 void pkvm_pgtable_lookup(struct pkvm_pgtable *pgt, unsigned long vaddr,
 		unsigned long *pphys, u64 *pprot, int *plevel);
-void pkvm_pgtable_destroy(struct pkvm_pgtable *pgt);
+void pkvm_pgtable_destroy(struct pkvm_pgtable *pgt, pgtable_leaf_ov_fn_t free_leaf);
 int pkvm_pgtable_annotate(struct pkvm_pgtable *pgt, unsigned long addr,
 			  unsigned long size, u64 annotation);
 #endif
