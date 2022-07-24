@@ -22,8 +22,16 @@ struct shadow_vcpu_state {
 
 	struct hlist_node hnode;
 	unsigned long vmcs12_pa;
+	bool vmcs02_initied;
 
 	struct vcpu_vmx vmx;
+
+	/* assume vmcs02 is one page */
+	u8 vmcs02[PAGE_SIZE] __aligned(PAGE_SIZE);
+	u8 cached_vmcs12[VMCS12_SIZE] __aligned(PAGE_SIZE);
+
+	/* indicate which vcpu vmcs02 runs with */
+	struct kvm_vcpu *vcpu;
 } __aligned(PAGE_SIZE);
 
 #define SHADOW_VM_HANDLE_SHIFT		32
