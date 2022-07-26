@@ -6,6 +6,7 @@
 #include <pkvm.h>
 
 #include "pkvm_hyp.h"
+#include "ept.h"
 
 struct pkvm_hyp *pkvm_hyp;
 
@@ -100,6 +101,10 @@ int __pkvm_init_shadow_vm(unsigned long kvm_va,
 	pkvm_spinlock_init(&vm->lock);
 
 	vm->host_kvm_va = kvm_va;
+
+	if (pkvm_shadow_ept_init(&vm->sept_desc))
+		return -EINVAL;
+
 	return allocate_shadow_vm_handle(vm);
 }
 
@@ -109,6 +114,8 @@ unsigned long __pkvm_teardown_shadow_vm(int shadow_vm_handle)
 
 	if (!vm)
 		return 0;
+
+	pkvm_shadow_ept_deinit(&vm->sept_desc);
 
 	memset(vm, 0, sizeof(struct pkvm_shadow_vm) + pkvm_shadow_vcpu_array_size());
 
