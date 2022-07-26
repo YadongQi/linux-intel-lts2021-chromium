@@ -90,10 +90,11 @@ out:
 	return vm;
 }
 
-int __pkvm_init_shadow_vm(unsigned long kvm_va,
-			  unsigned long shadow_pa,
-			  size_t shadow_size)
+int __pkvm_init_shadow_vm(struct kvm_vcpu *hvcpu, unsigned long kvm_va,
+			  unsigned long shadow_pa,  size_t shadow_size)
 {
+	unsigned long offset = offsetof(struct kvm, arch.vm_type);
+	unsigned long vm_type, bytes = sizeof(unsigned long);
 	struct pkvm_shadow_vm *vm;
 	int shadow_vm_handle;
 
@@ -102,6 +103,13 @@ int __pkvm_init_shadow_vm(unsigned long kvm_va,
 		(shadow_size != PAGE_ALIGN(sizeof(struct pkvm_shadow_vm)
 					   + pkvm_shadow_vcpu_array_size())))
 		return -EINVAL;
+
+	if (bytes != read_gva(hvcpu, kvm_va + offset, &vm_type, bytes, NULL))
+		return -EINVAL;
+
+	/* TODO: support KVM_X86_PROTECTED_VM */
+	if (vm_type != KVM_X86_DEFAULT_VM)
+		return -EPERM;
 
 	if(__pkvm_host_donate_hyp(shadow_pa, shadow_size))
 		return -EINVAL;
@@ -113,6 +121,7 @@ int __pkvm_init_shadow_vm(unsigned long kvm_va,
 
 	vm->host_kvm_va = kvm_va;
 	vm->shadow_size = shadow_size;
+	vm->vm_type = vm_type;
 
 	if (pkvm_shadow_ept_init(&vm->sept_desc))
 		goto undonate;
